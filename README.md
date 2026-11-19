@@ -1,24 +1,10 @@
-# Nebula Drift — Vedant Bhayani
+# Endless
 
-A scroll-driven 3D portfolio built with three.js. Scrolling flies the camera through a procedural nebula, past one planet per section.
+An infinite, procedural flight through the universe, built with three.js. It has no text and no UI, only space.
 
-**Live site:** https://forpc1428-eng.github.io/portfolio-3d/
+**Live:** https://forpc1428-eng.github.io/portfolio-3d/
 
-## Features
-- Fullscreen raymarched-style nebula (domain-warped fractal noise) whose colours shift per section
-- 15k twinkling stars with real stellar colour temperatures
-- Five shader planets with banded surfaces, fresnel rim light, glowing atmospheres and particle rings
-- Volumetric cloud billboards you fly through
-- Bloom, film grain, vignette and chromatic aberration post-processing
-- Live HUD (depth, velocity, sector) and smooth scroll-driven camera with mouse parallax
-- Quality tiers and adaptive resolution for phones, plus reduced-motion and no-WebGL fallbacks
+Gas giants with shadowed rings, rocky cratered worlds, ocean planets with clouds and sun glints, moons, binary suns, star clusters, emission and dark nebulae, spiral galaxies, asteroid fields and a Milky Way sky. Everything is generated ahead of you and recycled behind you, so the journey never ends.
 
-## Editing
-- All text lives in `index.html`. Project cards link to GitHub repos; replace descriptions and add email or socials in the Contact section.
-- 3D scene and shaders are in `main.js`. Section colours are in the `PALETTES` array.
-
-## Run locally
-No build step. Serve the folder with any static server:
-```bash
-npx serve .
-```
+- Scroll or swipe to speed up. Move the mouse to look around.
+- Add `?low` to force the lightweight mode, or `?seed=42` to replay the same universe.

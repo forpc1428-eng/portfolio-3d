@@ -3,18 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Vedant Bhayani — Creative Developer</title>
-  <meta name="description" content="Vedant Bhayani — creative developer building websites, apps and software. Drift through the nebula." />
+  <title>Vedant Bhayani</title>
+  <meta name="description" content="An endless journey through the universe." />
   <meta name="theme-color" content="#000000" />
   <meta name="color-scheme" content="dark" />
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="Vedant Bhayani — Creative Developer" />
-  <meta property="og:description" content="Drift through the nebula. Every light is something I've built." />
-  <meta name="twitter:card" content="summary_large_image" />
+  <meta property="og:title" content="Vedant Bhayani" />
+  <meta property="og:description" content="An endless journey through the universe." />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <script type="importmap">
     {
@@ -26,126 +21,8 @@
   </script>
 </head>
 <body>
-  <!-- Loader -->
-  <div id="loader" role="status" aria-live="polite">
-    <div class="loader-inner">
-      <div class="loader-orb"></div>
-      <p class="loader-label mono">Calibrating optics</p>
-      <p class="loader-pct mono"><span id="loader-pct">0</span>%</p>
-    </div>
-  </div>
-
-  <canvas id="webgl" aria-hidden="true"></canvas>
-
-  <!-- HUD -->
-  <div class="hud mono" aria-hidden="true">
-    <div class="hud-row"><span>Depth</span><b id="hud-depth">0.00 ly</b></div>
-    <div class="hud-row"><span>Velocity</span><b id="hud-vel">0.000 c</b></div>
-    <div class="hud-row"><span>Sector</span><b id="hud-sector">01 / 05</b></div>
-  </div>
-
-  <nav class="nav">
-    <a href="#top" class="brand" aria-label="Back to top">VB<span>.</span></a>
-    <ul>
-      <li><a href="#about">About</a></li>
-      <li><a href="#work">Work</a></li>
-      <li><a href="#skills">Skills</a></li>
-      <li><a href="#contact">Contact</a></li>
-    </ul>
-  </nav>
-
-  <div class="rail" aria-hidden="true"><span id="rail-fill"></span></div>
-
-  <main>
-    <section id="top" class="section hero">
-      <div class="hero-copy">
-        <p class="eyebrow mono reveal">Sector 01 — Origin</p>
-        <h1 class="reveal">Vedant<br /><em>Bhayani</em></h1>
-        <p class="role mono reveal">Creative Developer · Web · App · Software</p>
-        <p class="lede reveal">Drift through the nebula. Every light out here is something I've built.</p>
-      </div>
-      <a class="scroll-cue mono" href="#about"><span class="cue-line"></span>Scroll to drift</a>
-    </section>
-
-    <section id="about" class="section">
-      <div class="panel reveal">
-        <p class="eyebrow mono">Sector 02 — About</p>
-        <h2>Code that feels like a place.</h2>
-        <p>I'm Vedant, a creative developer who builds websites, apps and software. I care about the moment a page stops feeling like a page — when motion, light and detail make it feel like somewhere you've actually been.</p>
-        <p>From shader experiments to everyday tools, I like turning ideas into things people can touch.</p>
-      </div>
-    </section>
-
-    <section id="work" class="section">
-      <div class="panel panel-wide reveal">
-        <p class="eyebrow mono">Sector 03 — Selected work</p>
-        <h2>Signals I've sent out.</h2>
-        <div class="cards">
-          <a class="card" href="https://github.com/forpc1428-eng/v-colour-studio" target="_blank" rel="noopener">
-            <span class="card-num mono">01</span>
-            <h3>V Colour Studio</h3>
-            <p>A playground for building and exploring colour palettes.</p>
-            <span class="card-link mono">View on GitHub ↗</span>
-          </a>
-          <a class="card" href="https://github.com/forpc1428-eng/Gradient-bg" target="_blank" rel="noopener">
-            <span class="card-num mono">02</span>
-            <h3>Gradient BG</h3>
-            <p>Animated gradient backgrounds for the web.</p>
-            <span class="card-link mono">View on GitHub ↗</span>
-          </a>
-          <a class="card" href="https://github.com/forpc1428-eng/CODIGO" target="_blank" rel="noopener">
-            <span class="card-num mono">03</span>
-            <h3>CODIGO</h3>
-            <p>A web project exploring interface and interaction.</p>
-            <span class="card-link mono">View on GitHub ↗</span>
-          </a>
-          <a class="card" href="https://github.com/forpc1428-eng/Vedant-components-" target="_blank" rel="noopener">
-            <span class="card-num mono">04</span>
-            <h3>Components</h3>
-            <p>A growing library of reusable UI components.</p>
-            <span class="card-link mono">View on GitHub ↗</span>
-          </a>
-        </div>
-      </div>
-    </section>
-
-    <section id="skills" class="section">
-      <div class="panel reveal">
-        <p class="eyebrow mono">Sector 04 — Toolkit</p>
-        <h2>What I build with.</h2>
-        <ul class="skills">
-          <li>Three.js</li><li>WebGL &amp; GLSL</li><li>JavaScript</li><li>HTML &amp; CSS</li>
-          <li>Motion design</li><li>UI / UX</li><li>App development</li><li>Software</li>
-        </ul>
-      </div>
-    </section>
-
-    <section id="contact" class="section contact">
-      <div class="panel reveal">
-        <p class="eyebrow mono">Sector 05 — Arrival</p>
-        <h2>Let's build something unreal.</h2>
-        <p>Have an idea that deserves its own universe? Reach out.</p>
-        <div class="actions">
-          <a class="btn" href="https://github.com/forpc1428-eng" target="_blank" rel="noopener">GitHub ↗</a>
-        </div>
-      </div>
-      <footer class="mono">© <span id="year">2026</span> Vedant Bhayani — made with three.js</footer>
-    </section>
-  </main>
-
-  <div class="cursor-dot" aria-hidden="true"></div>
-  <div class="cursor-ring" aria-hidden="true"></div>
-
-  <noscript><style>#loader{display:none}</style></noscript>
-  <script>
-    // Safety net: never leave visitors stuck on the loader (e.g. if the CDN is blocked).
-    setTimeout(function () {
-      if (!document.body.classList.contains('is-ready')) {
-        document.documentElement.classList.add('no-webgl');
-        document.body.classList.add('is-ready');
-      }
-    }, 9000);
-  </script>
+  <canvas id="webgl" aria-label="An endless flight through space"></canvas>
+  <div id="fade" aria-hidden="true"></div>
   <script type="module" src="main.js"></script>
 </body>
 </html>
