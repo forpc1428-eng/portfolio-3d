@@ -1210,9 +1210,9 @@ function buildAsteroids() {
    SCHEDULER — keeps the universe going forever
    ===================================================================== */
 const pools = {
-  planet: [buildPlanetSystem(), buildPlanetSystem(), buildPlanetSystem()],
+  planet: [buildPlanetSystem(), buildPlanetSystem(), buildPlanetSystem(), buildPlanetSystem()],
   galaxy: [buildGalaxy(), buildGalaxy()],
-  nebula: [buildNebula(), buildNebula()],
+  nebula: [buildNebula(), buildNebula(), buildNebula()],
   star: [buildStar(), buildStar()],
   asteroids: [buildAsteroids()],
 };
@@ -1235,6 +1235,7 @@ const active = [];
 let camZ = 0;
 let nextZ = -320;
 const AHEAD = 2400;
+const BASE_SPEED = reduceMotion ? 6 : 42;
 const SPACING = { planet: [260, 420], nebula: [300, 460], galaxy: [220, 380], star: [200, 320], asteroids: [440, 560] };
 
 function spawn(type, z) {
@@ -1264,7 +1265,7 @@ function schedule() {
   // release encounters that are behind us
   for (let i = active.length - 1; i >= 0; i--) {
     const o = active[i];
-    if (o.anchor - camZ > o.behind) {
+    if (o.anchor - camZ > o.behind + 600) {
       o.active = false;
       o.group.visible = false;
       active.splice(i, 1);
@@ -1331,15 +1332,30 @@ composer.addPass(new OutputPass());
 const mouse = new THREE.Vector2();
 const mouseS = new THREE.Vector2();
 addEventListener('pointermove', (e) => mouse.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1));
-let boost = 0;
-addEventListener('wheel', (e) => { boost = Math.min(boost + Math.abs(e.deltaY) * 0.02, 60); }, { passive: true });
+// Scroll / swipe / keys drive the flight: down = rush forward, up = brake and drift back.
+let impulse = 0;
+const clampImpulse = () => { impulse = Math.max(-BASE_SPEED - 45, Math.min(impulse, 320)); };
+addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? innerHeight : 1;
+  impulse += e.deltaY * unit * 0.32;
+  clampImpulse();
+}, { passive: false });
 let touchY = null;
 addEventListener('touchstart', (e) => { touchY = e.touches[0].clientY; }, { passive: true });
 addEventListener('touchmove', (e) => {
   if (touchY === null) return;
-  boost = Math.min(boost + Math.abs(e.touches[0].clientY - touchY) * 0.08, 60);
-  touchY = e.touches[0].clientY;
+  const y = e.touches[0].clientY;
+  impulse += (touchY - y) * 1.3;
+  touchY = y;
+  clampImpulse();
 }, { passive: true });
+addEventListener('touchend', () => { touchY = null; }, { passive: true });
+addEventListener('keydown', (e) => {
+  if (['ArrowDown', 'PageDown', ' ', 'ArrowRight'].includes(e.key)) impulse += 70;
+  if (['ArrowUp', 'PageUp', 'ArrowLeft'].includes(e.key)) impulse -= 70;
+  clampImpulse();
+});
 
 function resize() {
   camera.aspect = innerWidth / innerHeight;
@@ -1355,7 +1371,6 @@ resize();
 /* =====================================================================
    LOOP
    ===================================================================== */
-const BASE_SPEED = reduceMotion ? 5 : 26;
 let time = 0;
 let travel = 0;
 let speed = BASE_SPEED;
@@ -1363,10 +1378,12 @@ const look = new THREE.Vector3();
 
 function step(dt) {
   time += dt;
-  boost *= Math.exp(-dt * 1.6);
-  speed += (BASE_SPEED + boost - speed) * Math.min(1, dt * 2);
+  impulse *= Math.exp(-dt * 1.1);
+  speed += (BASE_SPEED + impulse - speed) * Math.min(1, dt * 4);
+  const fovT = 60 + THREE.MathUtils.clamp((speed - BASE_SPEED) * 0.07, -5, 22);
+  if (Math.abs(camera.fov - fovT) > 0.01) { camera.fov += (fovT - camera.fov) * Math.min(1, dt * 3); camera.updateProjectionMatrix(); }
   camZ -= speed * dt;
-  travel += speed * dt;
+  travel += Math.abs(speed) * dt;
   if (camZ < -REBASE) rebase();
   schedule();
 

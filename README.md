@@ -6,5 +6,5 @@ An infinite, procedural flight through the universe, built with three.js. It has
 
 Gas giants with shadowed rings, rocky cratered worlds, ocean planets with clouds and sun glints, moons, binary suns, star clusters, emission and dark nebulae, spiral galaxies, asteroid fields and a Milky Way sky. Everything is generated ahead of you and recycled behind you, so the journey never ends.
 
-- Scroll or swipe to speed up. Move the mouse to look around.
+- Scroll down or swipe up to rush forward; scroll up or swipe down to brake and drift back. Arrow keys and space work too. Move the mouse to look around.
 - Add `?low` to force the lightweight mode, or `?seed=42` to replay the same universe.
