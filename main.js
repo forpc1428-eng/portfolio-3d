@@ -4,6 +4,8 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
 /* =====================================================================
    ENDLESS — an infinite, procedural flight through the universe.
@@ -1206,6 +1208,134 @@ function buildAsteroids() {
   };
 }
 
+
+/* ---------- VEDANT — a molten-rock monolith floating in space ---------- */
+function buildVedant(font) {
+  const group = new THREE.Group();
+  const geo = new TextGeometry('VEDANT', {
+    font, size: 26, depth: 9,
+    curveSegments: lowTier ? 6 : 12,
+    bevelEnabled: true, bevelThickness: 2.4, bevelSize: 1.3, bevelSegments: lowTier ? 3 : 6,
+  });
+  geo.center();
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { uLight: { value: new THREE.Vector3(0, 1, 1) }, uTime: { value: 0 }, uFade: { value: 1 }, uSeed: { value: 0 } },
+    vertexShader: /* glsl */ `
+      varying vec3 vN, vW, vObj;
+      void main() {
+        vObj = position;
+        vN = normalize(mat3(modelMatrix) * normal);
+        vec4 w = modelMatrix * vec4(position, 1.0);
+        vW = w.xyz;
+        gl_Position = projectionMatrix * viewMatrix * w;
+      }
+    `,
+    fragmentShader: /* glsl */ `
+      uniform vec3 uLight;
+      uniform float uTime, uFade, uSeed;
+      varying vec3 vN, vW, vObj;
+      ${NOISE(Q.objOct)}
+      vec3 bumpNormal(vec3 pos, vec3 n, float h, float k) {
+        vec3 dpdx = dFdx(pos), dpdy = dFdy(pos);
+        float dhx = dFdx(h), dhy = dFdy(h);
+        vec3 r1 = cross(dpdy, n), r2 = cross(n, dpdx);
+        float det = dot(dpdx, r1);
+        vec3 grad = sign(det) * (dhx * r1 + dhy * r2);
+        return normalize(abs(det) * n - k * grad);
+      }
+      void main() {
+        vec3 N0 = normalize(vN);
+        vec3 V = normalize(cameraPosition - vW);
+        vec3 L = normalize(uLight);
+        vec3 p = vObj * 0.085 + uSeed;
+        float h = fbm(p);
+        float dtl = fbm(p * 5.0 + 2.0);
+        float cr = ridged(p * 0.8 + 3.0);
+        float crack = smoothstep(0.62, 0.8, cr);
+        vec3 rock = mix(vec3(0.05, 0.047, 0.045), vec3(0.3, 0.26, 0.23), smoothstep(0.3, 0.72, h));
+        rock *= 0.65 + 0.55 * dtl;
+        float height = h * 0.5 + dtl * 0.5 - crack * 0.6;
+        vec3 N = bumpNormal(vW, N0, height, 1.6);
+        float diff = max(dot(N, L), 0.0);
+        vec3 colr = rock * diff * 2.6 + rock * 0.04;
+        float pulse = 0.75 + 0.25 * sin(uTime * 1.4 + h * 14.0);
+        vec3 lava = mix(vec3(1.0, 0.22, 0.03), vec3(1.0, 0.72, 0.32), smoothstep(0.75, 0.95, cr));
+        colr = mix(colr, lava * 3.2 * pulse, crack * 0.92);
+        float rim = pow(1.0 - max(dot(N0, V), 0.0), 3.0);
+        colr += vec3(1.0, 0.4, 0.12) * rim * 0.22;
+        gl_FragColor = vec4(colr * uFade, 1.0);
+      }
+    `,
+  });
+  const text = new THREE.Mesh(geo, mat);
+
+  // orbiting debris
+  const rockMat = new THREE.MeshStandardMaterial({ color: 0x6a625b, roughness: 0.95, flatShading: true, emissive: 0x200800, emissiveIntensity: 0.4 });
+  const count = lowTier ? 90 : 220;
+  const debris = new THREE.InstancedMesh(rockGeometry(9.1), rockMat, count);
+  debris.frustumCulled = false;
+  const bits = [];
+  for (let i = 0; i < count; i++) {
+    bits.push({
+      r: range(95, 175), a: rnd() * Math.PI * 2, y: gauss() * 9, s: 0.3 + Math.pow(rnd(), 3) * 3.2,
+      sp: range(0.02, 0.06), rot: new THREE.Euler(rnd() * 6, rnd() * 6, rnd() * 6),
+    });
+  }
+  const glowMat = new THREE.ShaderMaterial({
+    uniforms: { uFade: { value: 1 } },
+    vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+    fragmentShader: `
+      uniform float uFade; varying vec2 vUv;
+      void main(){ vec2 c = (vUv - 0.5) * vec2(2.0, 5.0); float r = length(c);
+        vec2 e = abs(vUv - 0.5) * 2.0; float edge = (1.0 - smoothstep(0.55, 1.0, e.x)) * (1.0 - smoothstep(0.4, 1.0, e.y));
+        gl_FragColor = vec4(vec3(1.0, 0.35, 0.1) * exp(-r * 2.4) * 0.12 * edge * uFade, 1.0); }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(260, 110), glowMat);
+  glow.position.z = -12;
+  const holder = new THREE.Group();
+  holder.add(glow, text);
+  group.add(holder, debris);
+  scene.add(group);
+  const dummy = new THREE.Object3D();
+  const obj = {
+    type: 'vedant', group, active: false, anchor: 0, behind: 260, focus: new THREE.Vector3(),
+    place(z) {
+      const side = sideSign();
+      group.position.set(pathX(z) + side * range(70, 90), pathY(z) + range(4, 16), z);
+      holder.rotation.set(range(-0.08, 0.08), -side * 0.55, range(-0.06, 0.06));
+      mat.uniforms.uSeed.value = range(0, 50);
+      const L = new THREE.Vector3(-side * 0.45, 0.65, 0.65).normalize();
+      mat.uniforms.uLight.value.copy(L);
+      obj.light = L;
+      obj.anchor = z;
+    },
+    update(dt, t) {
+      const d = camera.position.distanceTo(group.position);
+      const fade = 1 - THREE.MathUtils.smoothstep(d, 1500, 2300);
+      mat.uniforms.uFade.value = fade;
+      mat.uniforms.uTime.value = t;
+      glowMat.uniforms.uFade.value = fade;
+      holder.position.y = Math.sin(t * 0.4) * 1.5;
+      for (let i = 0; i < count; i++) {
+        const b = bits[i];
+        b.a += b.sp * dt;
+        b.rot.x += dt * 0.3; b.rot.y += dt * 0.2;
+        dummy.position.set(Math.cos(b.a) * b.r, b.y + Math.sin(b.a * 2.0) * 4, Math.sin(b.a) * b.r * 0.45);
+        dummy.rotation.copy(b.rot);
+        dummy.scale.setScalar(b.s);
+        dummy.updateMatrix();
+        debris.setMatrixAt(i, dummy.matrix);
+      }
+      debris.instanceMatrix.needsUpdate = true;
+      obj.focus.copy(group.position);
+    },
+  };
+  return obj;
+}
+
+const font = await new FontLoader().loadAsync('fonts/helvetiker_bold.typeface.json').catch(() => null);
+
 /* =====================================================================
    SCHEDULER — keeps the universe going forever
    ===================================================================== */
@@ -1216,19 +1346,23 @@ const pools = {
   star: [buildStar(), buildStar()],
   asteroids: [buildAsteroids()],
 };
+if (font) { pools.vedant = [buildVedant(font)]; pools.vedant[0].group.visible = false; }
 Object.values(pools).flat().forEach((o) => (o.group.visible = false));
 
 const ONLY = params.get('only');
 const WEIGHTS = ONLY ? [[ONLY, 1]] : [['planet', 0.36], ['nebula', 0.22], ['galaxy', 0.16], ['star', 0.14], ['asteroids', 0.12]];
 let lastType = '';
+let sinceVedant = 99;
+const VEDANT_EVERY = 6;
 function chooseType() {
+  if (pools.vedant && (!ONLY || ONLY === 'vedant') && sinceVedant >= VEDANT_EVERY && pools.vedant.some((o) => !o.active)) return 'vedant';
   for (let tries = 0; tries < 10; tries++) {
     let r = rnd(), acc = 0, type = 'planet';
     for (const [t, w] of WEIGHTS) { acc += w; if (r <= acc) { type = t; break; } }
     if (type === lastType && !ONLY) continue;
     if (pools[type].some((o) => !o.active)) return type;
   }
-  return Object.keys(pools).find((t) => pools[t].some((o) => !o.active)) || null;
+  return Object.keys(pools).find((t) => t !== 'vedant' && pools[t].some((o) => !o.active)) || null;
 }
 
 const active = [];
@@ -1236,7 +1370,7 @@ let camZ = 0;
 let nextZ = -320;
 const AHEAD = 2400;
 const BASE_SPEED = reduceMotion ? 6 : 42;
-const SPACING = { planet: [260, 420], nebula: [300, 460], galaxy: [220, 380], star: [200, 320], asteroids: [440, 560] };
+const SPACING = { planet: [260, 420], nebula: [300, 460], galaxy: [220, 380], star: [200, 320], asteroids: [440, 560], vedant: [560, 680] };
 
 function spawn(type, z) {
   const obj = pools[type].find((o) => !o.active);
@@ -1246,6 +1380,7 @@ function spawn(type, z) {
   obj.group.visible = true;
   active.push(obj);
   lastType = type;
+  sinceVedant = type === 'vedant' ? 0 : sinceVedant + 1;
   const sp = SPACING[type];
   nextZ = z - range(sp[0], sp[1]);
   return true;
@@ -1253,7 +1388,7 @@ function spawn(type, z) {
 
 // First encounter: a ringed giant, so the opening is memorable.
 (function opening() {
-  if (ONLY && ONLY !== 'planet') { nextZ = -200; return; }
+  if (ONLY && ONLY !== 'planet') { nextZ = -300; return; }
   const p = pools.planet[0];
   let guard = 0;
   do { p.place(-260); guard++; } while ((p.group.children[2].visible === false) && guard < 30);
@@ -1265,7 +1400,7 @@ function schedule() {
   // release encounters that are behind us
   for (let i = active.length - 1; i >= 0; i--) {
     const o = active[i];
-    if (o.anchor - camZ > o.behind + 600) {
+    if (o.anchor - camZ > o.behind + 900) {
       o.active = false;
       o.group.visible = false;
       active.splice(i, 1);
@@ -1326,6 +1461,19 @@ const finalPass = new ShaderPass({
 composer.addPass(finalPass);
 composer.addPass(new OutputPass());
 
+/* ---------- Tap / click anywhere: go full screen ---------- */
+function goFullscreen() {
+  const el = document.documentElement;
+  if (document.fullscreenElement || document.webkitFullscreenElement) return;
+  try {
+    const r = el.requestFullscreen ? el.requestFullscreen({ navigationUI: 'hide' })
+      : el.webkitRequestFullscreen ? el.webkitRequestFullscreen() : null;
+    if (r && r.catch) r.catch(() => {});
+  } catch (e) { /* not supported (e.g. iPhone Safari) */ }
+}
+addEventListener('click', goFullscreen);
+addEventListener('keydown', (e) => { if (e.key === 'f' || e.key === 'Enter') goFullscreen(); });
+
 /* =====================================================================
    INPUT & RESIZE
    ===================================================================== */
@@ -1334,7 +1482,7 @@ const mouseS = new THREE.Vector2();
 addEventListener('pointermove', (e) => mouse.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1));
 // Scroll / swipe / keys drive the flight: down = rush forward, up = brake and drift back.
 let impulse = 0;
-const clampImpulse = () => { impulse = Math.max(-BASE_SPEED - 45, Math.min(impulse, 320)); };
+const clampImpulse = () => { impulse = Math.max(-BASE_SPEED - 170, Math.min(impulse, 320)); };
 addEventListener('wheel', (e) => {
   e.preventDefault();
   const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? innerHeight : 1;
@@ -1375,11 +1523,13 @@ let time = 0;
 let travel = 0;
 let speed = BASE_SPEED;
 const look = new THREE.Vector3();
+const focusLook = new THREE.Vector3();
+let focusW = 0;
 
 function step(dt) {
   time += dt;
   impulse *= Math.exp(-dt * 1.1);
-  speed += (BASE_SPEED + impulse - speed) * Math.min(1, dt * 4);
+  speed += (BASE_SPEED * (1 - 0.45 * focusW) + impulse - speed) * Math.min(1, dt * 4);
   const fovT = 60 + THREE.MathUtils.clamp((speed - BASE_SPEED) * 0.07, -5, 22);
   if (Math.abs(camera.fov - fovT) > 0.01) { camera.fov += (fovT - camera.fov) * Math.min(1, dt * 3); camera.updateProjectionMatrix(); }
   camZ -= speed * dt;
@@ -1392,6 +1542,16 @@ function step(dt) {
   camera.position.set(x, y, camZ);
   const ahead = camZ - 60;
   look.set(pathX(ahead) + mouseS.x * 14, pathY(ahead) + mouseS.y * 8, ahead);
+  // turn toward VEDANT while passing it, then return to the path
+  let wT = 0;
+  const v = pools.vedant && pools.vedant[0];
+  if (v && v.active) {
+    const relZ = camZ - v.anchor;
+    wT = (1 - THREE.MathUtils.smoothstep(relZ, 140, 560)) * THREE.MathUtils.smoothstep(relZ, -110, 20);
+    focusLook.copy(v.group.position);
+  }
+  focusW += (wT - focusW) * Math.min(1, dt * 2.5);
+  if (focusW > 0.001) look.lerp(focusLook, focusW * 0.92);
   camera.lookAt(look);
   const bank = (pathX(camZ - 30) - x) * 0.012;
   camera.rotateZ(-bank);
