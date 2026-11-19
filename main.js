@@ -1317,6 +1317,7 @@ function buildVedant(font) {
       mat.uniforms.uTime.value = t;
       glowMat.uniforms.uFade.value = fade;
       holder.position.y = Math.sin(t * 0.4) * 1.5;
+      holder.scale.setScalar(camera.aspect < 1 ? 0.68 : 1);  // fit narrow phone screens
       for (let i = 0; i < count; i++) {
         const b = bits[i];
         b.a += b.sp * dt;
@@ -1389,11 +1390,14 @@ function spawn(type, z) {
 // First encounter: a ringed giant, so the opening is memorable.
 (function opening() {
   if (ONLY && ONLY !== 'planet') { nextZ = -300; return; }
+  let startZ = -260;
+  if (pools.vedant) { spawn('vedant', -480); startZ = -1050; }   // your name comes first
   const p = pools.planet[0];
   let guard = 0;
-  do { p.place(-260); guard++; } while ((p.group.children[2].visible === false) && guard < 30);
+  do { p.place(startZ); guard++; } while ((p.group.children[2].visible === false) && guard < 30);
   p.active = true; p.group.visible = true; active.push(p); lastType = 'planet';
-  nextZ = -260 - 380;
+  sinceVedant = 1;
+  nextZ = startZ - 380;
 })();
 
 function schedule() {
